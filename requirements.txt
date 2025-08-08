@@ -1,0 +1,5 @@
+flask==3.0.3
+pymongo>=4.6
+pydantic>=2.7
+pytest>=8.2
+# python-dotenv>=1.0  # uncomment if you want .env support (then load in __init__.py)
