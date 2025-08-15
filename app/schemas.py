@@ -35,5 +35,6 @@ class ResultaatIn(BaseModel):
 class StudentLogIn(BaseModel):
     student_id: str
     categorie_id: Optional[str] = None
+    opo_id: Optional[str] = None
     beschrijving: str
     registratiedatum: Optional[datetime] = None

@@ -1,72 +1,82 @@
 {% extends "base.html" %}
 {% block title %}Students{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h2 class="mb-0">Students</h2>
-</div>
+<h2 class="mb-3">Students</h2>
 
-<div class="card text-bg-dark border-secondary mb-4">
-  <div class="card-header border-secondary">Nieuwe student</div>
-  <div class="card-body">
-    <form method="post" action="{{ url_for('web.students_create') }}" class="row g-3">
-      <div class="col-md-3">
-        <label class="form-label">Studentnummer</label>
-        <input name="studentnummer" class="form-control" required>
+<div class="row g-3">
+  <!-- Create -->
+  <div class="col-lg-6">
+    <div class="card text-bg-dark border-secondary">
+      <div class="card-header">Nieuwe student</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('web.students_create') }}" class="row g-2">
+          <div class="col-4">
+            <label class="form-label">Studentnummer</label>
+            <input name="studentnummer" class="form-control" required maxlength="20">
+          </div>
+          <div class="col-4">
+            <label class="form-label">Voornaam</label>
+            <input name="voornaam" class="form-control" required>
+          </div>
+          <div class="col-4">
+            <label class="form-label">Achternaam</label>
+            <input name="achternaam" class="form-control" required>
+          </div>
+          <div class="col-6">
+            <label class="form-label">Inschrijfdatum</label>
+            <input type="date" name="inschrijfdatum" class="form-control">
+          </div>
+          <div class="col-6">
+            <label class="form-label">Opleiding</label>
+            <select name="opleiding_id" class="form-select">
+              <option value="">—</option>
+              {% for o in opleidingen %}
+                <option value="{{ o._id }}">{{ o.naam }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-12">
+            <button class="btn btn-primary">Opslaan</button>
+          </div>
+        </form>
       </div>
-      <div class="col-md-3">
-        <label class="form-label">Voornaam</label>
-        <input name="voornaam" class="form-control" required>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">Achternaam</label>
-        <input name="achternaam" class="form-control" required>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">Inschrijfdatum</label>
-        <input name="inschrijfdatum" type="date" class="form-control">
-      </div>
-      <div class="col-md-4">
-        <label class="form-label">Opleiding</label>
-        <select name="opleiding_id" class="form-select">
-          <option value="">— geen —</option>
-          {% for o in opleidingen %}
-            <option value="{{ o._id }}">{{ o.naam }}</option>
+    </div>
+  </div>
+
+  <!-- List -->
+  <div class="col-lg-6">
+    <div class="card text-bg-dark border-secondary">
+      <div class="card-header">Lijst</div>
+      <div class="card-body p-0">
+        <table class="table table-dark table-striped table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Studentnr</th><th>Naam</th><th>Opleiding</th><th class="text-end">Acties</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for s in students %}
+            <tr>
+              <td>{{ s.studentnummer or s['studentnummer'] }}</td>
+              <td>
+                <a class="link-light" href="{{ url_for('web.student_detail', id=s['_id']) }}">
+                  {{ s.achternaam or s['achternaam'] }}, {{ s.voornaam or s['voornaam'] }}
+                </a>
+              </td>
+              <td>{{ opleidings_map.get(s.opleiding_id, "—") }}</td>
+              <td class="text-end">
+                <form method="post" action="{{ url_for('web.students_delete', id=s['_id']) }}" onsubmit="return confirm('Verwijderen?')">
+                  <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                </form>
+              </td>
+            </tr>
+          {% else %}
+            <tr><td colspan="4" class="text-center text-secondary">Geen studenten</td></tr>
           {% endfor %}
-        </select>
+          </tbody>
+        </table>
       </div>
-      <div class="col-12">
-        <button class="btn btn-primary">
-          <i class="bi-plus-lg"></i> Toevoegen
-        </button>
-      </div>
-    </form>
+    </div>
   </div>
 </div>
-
-{% if students %}
-<div class="table-responsive">
-  <table class="table table-dark table-striped table-hover align-middle">
-    <thead>
-      <tr>
-        <th>Studentnummer</th>
-        <th>Naam</th>
-        <th>Inschrijfdatum</th>
-        <th>Opleiding</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for s in students %}
-        <tr>
-          <td class="text-monospace">{{ s.studentnummer }}</td>
-          <td>{{ s.voornaam }} {{ s.achternaam }}</td>
-          <td>{{ s.inschrijfdatum or "—" }}</td>
-          <td>{{ opleidings_map.get(s.opleiding_id, "—") }}</td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-{% else %}
-  <div class="alert alert-secondary">Nog geen studenten.</div>
-{% endif %}
 {% endblock %}
