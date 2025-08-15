@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h2 class="mb-3">Dashboard</h2>
+
+<div class="row g-3">
+  <div class="col-sm-4">
+    <div class="card text-bg-dark border-secondary h-100">
+      <div class="card-body">
+        <div class="text-secondary text-uppercase small">Students</div>
+        <div class="display-6">{{ counts.students | default(0) }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="card text-bg-dark border-secondary h-100">
+      <div class="card-body">
+        <div class="text-secondary text-uppercase small">OPO’s</div>
+        <div class="display-6">{{ counts.opos | default(0) }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="card text-bg-dark border-secondary h-100">
+      <div class="card-body">
+        <div class="text-secondary text-uppercase small">Resultaten</div>
+        <div class="display-6">{{ counts.resultaten | default(0) }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="mt-4">
+  Start bij <a class="link-light" href="{{ url_for('web.students_page') }}">Students</a>.
+</p>
+{% endblock %}

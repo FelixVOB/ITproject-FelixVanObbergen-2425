@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Students{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="mb-0">Students</h2>
+</div>
+
+<div class="card text-bg-dark border-secondary mb-4">
+  <div class="card-header border-secondary">Nieuwe student</div>
+  <div class="card-body">
+    <form method="post" action="{{ url_for('web.students_create') }}" class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label">Studentnummer</label>
+        <input name="studentnummer" class="form-control" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Voornaam</label>
+        <input name="voornaam" class="form-control" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Achternaam</label>
+        <input name="achternaam" class="form-control" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Inschrijfdatum</label>
+        <input name="inschrijfdatum" type="date" class="form-control">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Opleiding</label>
+        <select name="opleiding_id" class="form-select">
+          <option value="">— geen —</option>
+          {% for o in opleidingen %}
+            <option value="{{ o._id }}">{{ o.naam }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12">
+        <button class="btn btn-primary">
+          <i class="bi-plus-lg"></i> Toevoegen
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if students %}
+<div class="table-responsive">
+  <table class="table table-dark table-striped table-hover align-middle">
+    <thead>
+      <tr>
+        <th>Studentnummer</th>
+        <th>Naam</th>
+        <th>Inschrijfdatum</th>
+        <th>Opleiding</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in students %}
+        <tr>
+          <td class="text-monospace">{{ s.studentnummer }}</td>
+          <td>{{ s.voornaam }} {{ s.achternaam }}</td>
+          <td>{{ s.inschrijfdatum or "—" }}</td>
+          <td>{{ opleidings_map.get(s.opleiding_id, "—") }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+  <div class="alert alert-secondary">Nog geen studenten.</div>
+{% endif %}
+{% endblock %}
