@@ -1,2 +1,22 @@
 /* app/static/css/main.css */
 .text-monospace { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+/* Collectief rapport */
+.report-multiselect { min-height: 12rem; }
+.report-table-wrapper { overflow: auto; }
+
+.table-report thead tr.sticky-header th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: #1b1f24; /* donkere header boven Bootstrap dark */
+}
+
+.table-report .sticky-col {
+  position: sticky;
+  left: 0;
+  z-index: 6;
+  background: #0f1216; /* celkleur eerste kolom */
+  box-shadow: 2px 0 0 rgba(255,255,255,0.05);
+}
+
+.table-report td, .table-report th { white-space: nowrap; }

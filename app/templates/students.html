@@ -3,12 +3,30 @@
 {% block content %}
 <h2 class="mb-3">Students</h2>
 
+{# ===== CSV Import / Export (alleen bij ingelogd) ===== #}
+{% if can_edit %}
+<div class="card text-bg-dark border-secondary mb-3">
+  <div class="card-body">
+    <form class="d-flex gap-2"
+      method="post"
+      action="{{ url_for('web.students_import') }}"
+      enctype="multipart/form-data">
+  <input type="file" name="file" accept=".csv" class="form-control form-control-sm" required>
+  <button class="btn btn-sm btn-outline-light">Importeren CSV</button>
+  <a class="btn btn-sm btn-outline-secondary"
+     href="{{ url_for('web.students_import_sample') }}">Voorbeeld CSV</a>
+</form>
+  </div>
+</div>
+{% endif %}
+
 <div class="row g-3">
   <!-- Create -->
   <div class="col-lg-6">
-    <div class="card text-bg-dark border-secondary">
+    <div class="card text-bg-dark border-secondary h-100">
       <div class="card-header">Nieuwe student</div>
       <div class="card-body">
+        {% if can_edit %}
         <form method="post" action="{{ url_for('web.students_create') }}" class="row g-2">
           <div class="col-4">
             <label class="form-label">Studentnummer</label>
@@ -31,7 +49,7 @@
             <select name="opleiding_id" class="form-select">
               <option value="">—</option>
               {% for o in opleidingen %}
-                <option value="{{ o._id }}">{{ o.naam }}</option>
+                <option value="{{ o._id }}">{{ o.label or o.naam }}</option>
               {% endfor %}
             </select>
           </div>
@@ -39,6 +57,11 @@
             <button class="btn btn-primary">Opslaan</button>
           </div>
         </form>
+        {% else %}
+          <div class="text-secondary">
+            Inloggen vereist om studenten toe te voegen.
+          </div>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -46,12 +69,18 @@
   <!-- List -->
   <div class="col-lg-6">
     <div class="card text-bg-dark border-secondary">
-      <div class="card-header">Lijst</div>
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Lijst</span>
+        {# optioneel: kleine zoekbalk kan hier later #}
+      </div>
       <div class="card-body p-0">
         <table class="table table-dark table-striped table-hover mb-0">
           <thead>
             <tr>
-              <th>Studentnr</th><th>Naam</th><th>Opleiding</th><th class="text-end">Acties</th>
+              <th>Studentnr</th>
+              <th>Naam</th>
+              <th>Opleiding</th>
+              {% if can_edit %}<th class="text-end">Acties</th>{% endif %}
             </tr>
           </thead>
           <tbody>
@@ -64,14 +93,21 @@
                 </a>
               </td>
               <td>{{ opleidings_map.get(s.opleiding_id, "—") }}</td>
+              {% if can_edit %}
               <td class="text-end">
-                <form method="post" action="{{ url_for('web.students_delete', id=s['_id']) }}" onsubmit="return confirm('Verwijderen?')">
+                <form method="post" action="{{ url_for('web.students_delete', id=s['_id']) }}"
+                      onsubmit="return confirm('Verwijderen?')">
                   <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
                 </form>
               </td>
+              {% endif %}
             </tr>
           {% else %}
-            <tr><td colspan="4" class="text-center text-secondary">Geen studenten</td></tr>
+            <tr>
+              <td colspan="{{ 3 + (1 if can_edit else 0) }}" class="text-center text-secondary">
+                Geen studenten
+              </td>
+            </tr>
           {% endfor %}
           </tbody>
         </table>

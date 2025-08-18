@@ -1,13 +1,17 @@
+# app/db.py
 from pymongo import ASCENDING
 
 def ensure_indexes(db):
+    # users
+    db.users.create_index([("email", ASCENDING)], unique=True)
+
     # students
     db.students.create_index([("studentnummer", ASCENDING)], unique=True)
 
     # opleidingen
     db.opleidingen.create_index([("naam", ASCENDING)], unique=True)
 
-    # OPO's (vakken)
+    # OPO's
     db.opos.create_index([("afkorting", ASCENDING)], unique=True)
     db.opos.create_index([("code", ASCENDING)], unique=True)
 

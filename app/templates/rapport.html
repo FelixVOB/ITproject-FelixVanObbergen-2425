@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+{% block title %}Collectief rapport{% endblock %}
+{% block content %}
+
+<!-- Kleine, lokale CSS om de multi-select als een echte select te laten ogen -->
+<style>
+  .multi-select-toggle {
+    /* lijk op .form-select */
+    background-color: #fff;
+    color: #212529;
+    border: 1px solid #ced4da;
+    padding: .375rem 2.25rem .375rem .75rem;
+    border-radius: .375rem;
+    height: calc(2.25rem + 2px);
+    line-height: 1.5;
+  }
+  .multi-select-toggle:focus {
+    outline: 0;
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 .25rem rgba(13,110,253,.25);
+  }
+  /* caret rechts in de knop */
+  .multi-select-toggle .caret {
+    pointer-events: none;
+  }
+  /* dropdown zelf even breed en scrolbaar */
+  .multi-select-menu {
+    width: 100%;
+    max-height: 18rem;
+    overflow: auto;
+  }
+</style>
+
+<h2 class="mb-4">Collectief rapport</h2>
+
+<form class="row g-3 align-items-end mb-4" method="get" action="{{ url_for('web.rapport_page') }}">
+  <div class="col-lg-4">
+    <label class="form-label">Academiejaar</label>
+    <select class="form-select" name="aj" required>
+      {% for aj in academiejaren %}
+        <option value="{{ aj }}" {{ 'selected' if aj == sel_aj else '' }}>{{ aj }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="col-lg-4">
+    <label class="form-label">Opleiding (optioneel)</label>
+    <select class="form-select" name="opl">
+      <option value="">Alle opleidingen</option>
+      {% for o in opleidingen %}
+        <option value="{{ o._id }}" {{ 'selected' if o._id == sel_opl else '' }}>{{ o.naam }} — {{ o.dag_avond }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="col-lg-4">
+    <label class="form-label">OPO’s (meerdere mogelijk)</label>
+
+  <div class="dropdown w-100">
+    <button type="button"
+            class="multi-select-toggle w-100 d-flex align-items-center justify-content-between"
+            id="oposDropdown"
+            data-bs-toggle="dropdown"
+            data-bs-auto-close="outside"
+            aria-expanded="false">
+      <span id="oposLabel">Alle OPO’s</span>
+      <span class="caret"><i class="bi bi-chevron-down ms-2"></i></span>
+    </button>
+
+    <div class="dropdown-menu p-3 multi-select-menu">
+      {% for o in all_opos %}
+        <div class="form-check">
+          <input class="form-check-input opo-check"
+                 type="checkbox"
+                 value="{{ o._id }}"
+                 id="opo-{{ o._id }}"
+                 {% if (not sel_opo_ids) or (o._id in sel_opo_ids) %}checked{% endif %}>
+          <label class="form-check-label" for="opo-{{ o._id }}">
+            {{ o.afkorting }} — {{ o.naam }}
+          </label>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Hidden inputs die we met JS vullen zodat ?opos=..&opos=.. meegaan -->
+  <div id="oposInputs"></div>
+</div>
+
+    <!-- Hidden inputs die we met JS vullen zodat ?opos=..&opos=.. meegaan -->
+    <div id="oposInputs"></div>
+  </div>
+
+  <div class="col-12 d-flex gap-2 flex-wrap">
+  <button class="btn btn-primary">Toon</button>
+  <a href="{{ url_for('web.rapport_page') }}" class="btn btn-outline-secondary">Reset</a>
+
+  <!-- CSV export with current filters -->
+  <a class="btn btn-success"
+     href="{{ url_for('web.rapport_csv', aj=sel_aj, opl=sel_opl, opos=sel_opo_ids) }}">
+    Download CSV
+  </a>
+</div>
+</div>
+
+</form>
+
+{% macro badge(val, kans) -%}
+  {% if val is none %}
+    <span class="badge rounded-pill text-bg-secondary">NA</span>
+  {% elif val >= 10 %}
+    <span class="badge rounded-pill text-bg-success">{{ '{:.1f}'.format(val) }}</span>
+  {% else %}
+    <span class="badge rounded-pill text-bg-danger">{{ '{:.1f}'.format(val) }}</span>
+  {% endif %}
+  {% if kans in (1, 2) %}
+    <small class="text-secondary ms-1">k{{ kans }}</small>
+  {% endif %}
+{%- endmacro %}
+
+{% macro fmtpct(v) -%}
+  {%- if v is not none -%}{{ '{:.1f}%'.format(v) }}{%- else -%}—{%- endif -%}
+{%- endmacro %}
+
+<div class="table-responsive">
+  <table class="table table-dark table-striped align-middle">
+    <thead>
+      <tr>
+        <th style="min-width: 260px;">Student</th>
+        {% for o in shown_opos %}
+          <th class="text-center" title="{{ o.naam }}">{{ o.afkorting }}<br><small class="text-secondary">{{ o.naam }}</small></th>
+        {% else %}
+          <th class="text-center text-secondary">— geen OPO’s gekozen —</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+        {% set stu = r.student if r.get('student') else r %}
+        <tr>
+          <td>
+            <div class="fw-semibold">
+              {{ stu.full_name or (stu.achternaam ~ ', ' ~ stu.voornaam) }}
+            </div>
+            <div class="text-secondary small">{{ stu.studentnummer }}</div>
+          </td>
+          {% for o in shown_opos %}
+            {% set cell = r.cells.get(o._id) if r.get('cells') else None %}
+            <td class="text-center">
+              {% if cell %}
+                {{ badge(cell.best, cell.kans) }}
+              {% else %}
+                <span class="text-secondary">—</span>
+              {% endif %}
+            </td>
+          {% else %}
+            <td class="text-center text-secondary">—</td>
+          {% endfor %}
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="{{ 1 + (shown_opos|length or 1) }}" class="text-center text-secondary py-4">
+            Geen gegevens voor deze selectie.
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% if opo_stats and opo_stats|length %}
+  <h5 class="mt-4 mb-2">Samenvatting per OPO ({{ sel_aj }})</h5>
+  <div class="table-responsive">
+    <table class="table table-dark table-striped align-middle">
+      <thead>
+        <tr>
+          <th>OPO</th>
+          <th class="text-end">Totaal</th>
+          <th class="text-end">Geslaagd</th>
+          <th class="text-end">Niet geslaagd</th>
+          <th class="text-end">NA</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in opo_stats %}
+          <tr>
+            <td>
+              <span class="fw-semibold">{{ s.opo.afkorting }}</span>
+              <small class="text-secondary">— {{ s.opo.naam }}</small>
+            </td>
+            <td class="text-end">{{ s.total }}</td>
+            <td class="text-end">
+              <span class="badge rounded-pill text-bg-success">{{ s.passed }}</span>
+              <small class="text-secondary ms-2">{{ fmtpct(s.pct_passed) }}</small>
+            </td>
+            <td class="text-end">
+              <span class="badge rounded-pill text-bg-danger">{{ s.failed }}</span>
+              <small class="text-secondary ms-2">{{ fmtpct(s.pct_failed) }}</small>
+            </td>
+            <td class="text-end">
+              <span class="badge rounded-pill text-bg-secondary">{{ s.na }}</span>
+              <small class="text-secondary ms-2">{{ fmtpct(s.pct_na) }}</small>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endif %}
+
+
+<script>
+(function () {
+  const checks = document.querySelectorAll('.opo-check');
+  const container = document.getElementById('oposInputs');
+  const label = document.getElementById('oposLabel');
+
+  function sync() {
+    container.innerHTML = '';
+    let count = 0;
+    checks.forEach(ch => {
+      if (ch.checked) {
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = 'opos';
+        hidden.value = ch.value;
+        container.appendChild(hidden);
+        count++;
+      }
+    });
+
+    // label: "Alle OPO’s" wanneer alles is aangevinkt
+    if (count === checks.length) {
+      label.textContent = 'Alle OPO’s';
+    } else if (count === 0) {
+      label.textContent = 'Geen OPO’s';
+    } else {
+      label.textContent = count === 1 ? '1 OPO geselecteerd' : `${count} OPO’s geselecteerd`;
+    }
+  }
+
+  checks.forEach(ch => ch.addEventListener('change', sync));
+  // initial state (alle zijn al aangevinkt via Jinja als er geen filter is)
+  sync();
+})();
+</script>
+
+{% endblock %}

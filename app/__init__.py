@@ -2,24 +2,38 @@
 import os
 from flask import Flask
 from pymongo import MongoClient
+from bson import ObjectId
+from flask_login import LoginManager
+from .db import ensure_indexes
+from .models import User
 
 def create_app():
-    app = Flask(__name__, static_folder="static", template_folder="templates")
-    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret")
+    app = Flask(__name__)
 
-    mongo_url = os.getenv("MONGO_URL", "mongodb://127.0.0.1:27017/itproject")
-    client = MongoClient(mongo_url)
-    app.db = client.get_default_database()
+    # --- Config ---
+    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret-change-me")
+    mongo_uri = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
+    mongo_db = os.getenv("MONGO_DB", "studentopvolging")
 
-    from .db import ensure_indexes
+    # --- DB ---
+    client = MongoClient(mongo_uri)
+    app.db = client[mongo_db]
     ensure_indexes(app.db)
 
-    # API
-    from .routes import bp
-    app.register_blueprint(bp, url_prefix="/api")
+    # --- Login ---
+    login_manager = LoginManager()
+    login_manager.login_view = "auth.login"   # where to redirect if not logged in
+    login_manager.init_app(app)
 
-    # WEB
+    @login_manager.user_loader
+    def load_user(user_id: str):
+        doc = app.db.users.find_one({"_id": ObjectId(user_id)})
+        return User.from_doc(doc)
+
+    # --- Blueprints ---
     from .web import web
+    from .auth import auth
     app.register_blueprint(web)
+    app.register_blueprint(auth)
 
     return app

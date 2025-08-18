@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Register{% endblock %}
+{% block content %}
+<h2 class="mb-3">Register</h2>
+<div class="card text-bg-dark border-secondary" style="max-width: 560px;">
+  <div class="card-body">
+    <form method="post" action="{{ url_for('auth.register') }}" class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Naam</label>
+        <input name="name" class="form-control" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">E-mail</label>
+        <input name="email" type="email" class="form-control" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Wachtwoord</label>
+        <input name="password" type="password" class="form-control" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Bevestig wachtwoord</label>
+        <input name="confirm" type="password" class="form-control" required>
+      </div>
+      <div class="col-12 d-flex gap-2">
+        <button class="btn btn-primary">Account aanmaken</button>
+        <a class="btn btn-outline-secondary" href="{{ url_for('web.home') }}">Annuleren</a>
+      </div>
+      <div class="col-12 text-secondary small">
+        Eerste geregistreerde gebruiker wordt automatisch <strong>admin</strong>; daarna standaard <strong>viewer</strong>.
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

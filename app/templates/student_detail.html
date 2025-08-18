@@ -1,151 +1,349 @@
 {% extends "base.html" %}
-{% block title %}Student: {{ student.voornaam }} {{ student.achternaam }}{% endblock %}
+{% block title %}Student • {{ s.voornaam }} {{ s.achternaam }}{% endblock %}
+
 {% block content %}
 
-<h2 class="mb-3">
-  {{ student.voornaam }} {{ student.achternaam }}
-  <small class="text-secondary">({{ student.studentnummer }})</small>
-</h2>
+<!-- Breadcrumb / header -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('web.students_page') }}">
+      ← Terug naar studenten
+    </a>
+  </div>
+  <div class="text-end">
+    <div class="fw-semibold fs-5">
+      {{ s.voornaam }} {{ s.achternaam }}
+    </div>
+    <div class="text-secondary small">Studentnr: {{ s.studentnummer }}</div>
+  </div>
+</div>
 
-<div class="row g-3">
-  <!-- Profile quick info -->
-  <div class="col-lg-4">
-    <div class="card text-bg-dark border-secondary h-100">
-      <div class="card-header">Profiel</div>
-      <div class="card-body">
-        <dl class="row mb-0">
-          <dt class="col-5">Inschrijfdatum</dt>
-          <dd class="col-7">{{ student.inschrijfdatum or "—" }}</dd>
+<!-- Tabs -->
+<ul class="nav nav-tabs" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active" id="tab-gegevens" data-bs-toggle="tab"
+            data-bs-target="#pane-gegevens" type="button" role="tab">
+      Gegevens
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="tab-resultaten" data-bs-toggle="tab"
+            data-bs-target="#pane-resultaten" type="button" role="tab">
+      Resultaten
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="tab-logboek" data-bs-toggle="tab"
+            data-bs-target="#pane-logboek" type="button" role="tab">
+      Logboek
+    </button>
+  </li>
+</ul>
 
-          <dt class="col-5">Opleiding</dt>
-          <dd class="col-7">
-            {% set o = (opleidingen | selectattr('_id','equalto', student.opleiding_id) | list) %}
-            {{ (o[0].naam if o and o[0].naam else "—") }}
-          </dd>
-        </dl>
+<div class="tab-content pt-3">
+
+  <!-- GEGEVENS ------------------------------------------------------------ -->
+  <div class="tab-pane fade show active" id="pane-gegevens" role="tabpanel"
+       aria-labelledby="tab-gegevens">
+    <div class="row g-3">
+      <div class="col-lg-8">
+        <div class="card text-bg-dark border-secondary">
+          <div class="card-header">Studentgegevens</div>
+          <div class="card-body">
+            <form method="post" action="{{ url_for('web.student_update', id=s['_id']) }}" class="row g-3">
+              <div class="col-sm-6">
+                <label class="form-label">Studentnummer</label>
+                <input name="studentnummer" class="form-control" value="{{ s.studentnummer or '' }}" required>
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label">Inschrijfdatum</label>
+                <input name="inschrijfdatum" class="form-control" value="{{ s.inschrijfdatum or '' }}" placeholder="jjjj-mm-dd">
+              </div>
+
+              <div class="col-sm-6">
+                <label class="form-label">Voornaam</label>
+                <input name="voornaam" class="form-control" value="{{ s.voornaam or '' }}" required>
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label">Achternaam</label>
+                <input name="achternaam" class="form-control" value="{{ s.achternaam or '' }}" required>
+              </div>
+
+              <div class="col-sm-8">
+                <label class="form-label">Opleiding</label>
+                <select name="opleiding_id" class="form-select">
+                  <option value="">—</option>
+                  {% for o in opleidingen %}
+                    <option value="{{ o['_id'] }}" {% if s.opleiding_id == o['_id'] %}selected{% endif %}>
+                      {{ o.label or (o.naam ~ ' — ' ~ o.dag_avond) }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="col-12 d-flex gap-2">
+                <button class="btn btn-primary">Opslaan</button>
+                <form method="post" action="{{ url_for('web.students_delete', id=s['_id']) }}"
+                      onsubmit="return confirm('Deze student en alle gekoppelde resultaten/logs verwijderen?')">
+                  <button class="btn btn-outline-danger">Verwijderen</button>
+                </form>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="card text-bg-dark border-secondary h-100">
+          <div class="card-header">Snelle info</div>
+          <div class="card-body">
+            <div class="small text-secondary mb-1">Studentnummer</div>
+            <div class="mb-3">{{ s.studentnummer or '—' }}</div>
+
+            <div class="small text-secondary mb-1">Opleiding</div>
+            <div class="mb-3">
+              {% set current_opl = (opleidingen | selectattr('_id','equalto', s.opleiding_id) | list | first) %}
+              {{ (current_opl.label if current_opl else '—') }}
+            </div>
+
+            <div class="small text-secondary mb-1">Inschrijfdatum</div>
+            <div>{{ s.inschrijfdatum or '—' }}</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Resultaten -->
-  <div class="col-lg-8">
-    <div class="card text-bg-dark border-secondary">
-      <div class="card-header">Resultaten</div>
+  <!-- RESULTATEN ---------------------------------------------------------- -->
+  <div class="tab-pane fade" id="pane-resultaten" role="tabpanel"
+       aria-labelledby="tab-resultaten">
+    <div class="card text-bg-dark border-secondary mb-3">
+      <div class="card-header">Nieuw resultaat</div>
       <div class="card-body">
-        <form method="post" action="{{ url_for('web.add_result', id=student._id) }}" class="row g-2 mb-3">
-          <div class="col-md-4">
+        <form method="post" action="{{ url_for('web.student_add_result', id=s['_id']) }}" class="row g-2 align-items-end">
+          <div class="col-md-4 col-lg-3">
             <label class="form-label">OPO</label>
             <select name="opo_id" class="form-select" required>
+              <option value="">Kies...</option>
               {% for o in opos %}
-                <option value="{{ o._id }}">{{ o.afkorting }} {{ o.naam }}</option>
+                <option value="{{ o['_id'] }}">{{ o.label or (o.afkorting ~ ' — ' ~ o.naam) }}</option>
               {% endfor %}
             </select>
           </div>
-          <div class="col-md-3">
+          <div class="col-md-3 col-lg-2">
             <label class="form-label">Academiejaar</label>
-            <select name="academiejaar" class="form-select" required>
-              {% for aj in jaren %}
-                <option>{{ aj.academiejaar }}</option>
+            <select name="academiejaar" class="form-select">
+              {% for aj in academiejaren %}
+                <option value="{{ aj }}">{{ aj }}</option>
               {% endfor %}
             </select>
           </div>
-          <div class="col-md-2">
+          <div class="col-md-2 col-lg-1">
             <label class="form-label">Kans</label>
-            <select name="kans" class="form-select" required>
+            <select name="kans" class="form-select">
               <option value="1">1</option>
               <option value="2">2</option>
             </select>
           </div>
-          <div class="col-md-2">
+          <div class="col-md-3 col-lg-2">
             <label class="form-label">Cijfer</label>
-            <input name="cijfer" class="form-control" type="number" step="0.1" min="0" max="20" placeholder="NA=leeg">
+            <input name="cijfer" class="form-control" placeholder="0–20" inputmode="decimal">
           </div>
-          <div class="col-md-1 d-flex align-items-end">
-            <button class="btn btn-primary w-100">+ </button>
+          <div class="col-md-2 col-lg-2 form-check ms-2">
+            <input class="form-check-input" type="checkbox" id="is_na" name="is_na">
+            <label class="form-check-label" for="is_na">NA</label>
+          </div>
+          <div class="col-md-2 col-lg-2">
+            <button class="btn btn-primary w-100">Opslaan</button>
           </div>
         </form>
-
-        <div class="table-responsive">
-          <table class="table table-dark table-striped table-hover mb-0 align-middle">
-            <thead>
-              <tr>
-                <th>AJ</th><th>OPO</th><th>Kans</th><th>Cijfer</th><th class="text-end">Acties</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for r in results %}
-                <tr>
-                  <td>{{ r.academiejaar }}</td>
-                  <td>{{ opo_map.get(r.opo_id, r.opo_id) }}</td>
-                  <td>{{ r.kans }}</td>
-                  <td>{{ "NA" if r.cijfer is none else r.cijfer }}</td>
-                  <td class="text-end">
-                    <form method="post" action="{{ url_for('web.delete_result', rid=r._id) }}" onsubmit="return confirm('Resultaat verwijderen?')">
-                      <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
-                    </form>
-                  </td>
-                </tr>
-              {% else %}
-                <tr><td colspan="5" class="text-center text-secondary">Geen resultaten</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Logs -->
-  <div class="col-lg-12">
     <div class="card text-bg-dark border-secondary">
-      <div class="card-header">Student-log</div>
-      <div class="card-body">
-        <form method="post" action="{{ url_for('web.add_log', id=student._id) }}" class="row g-2 mb-3">
-          <div class="col-md-3">
-            <label class="form-label">Categorie</label>
-            <select name="categorie_id" class="form-select">
-              <option value="">— (geen)</option>
-              {% for c in categories %}
-                <option value="{{ c._id }}">{{ c.afkorting }} — {{ c.omschrijving }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="col-md-8">
-            <label class="form-label">Beschrijving</label>
-            <input name="beschrijving" class="form-control" required>
-          </div>
-          <div class="col-md-1 d-flex align-items-end">
-            <button class="btn btn-primary w-100">+ </button>
-          </div>
-        </form>
-
-        <div class="table-responsive">
-          <table class="table table-dark table-striped table-hover mb-0">
-            <thead><tr><th>Datum</th><th>Categorie</th><th>Beschrijving</th><th class="text-end">Acties</th></tr></thead>
-            <tbody>
-              {% for l in logs %}
-                <tr>
-                  <td>{{ l.registratiedatum.strftime('%Y-%m-%d %H:%M') if l.registratiedatum else "—" }}</td>
-                  <td>
-                    {% set cat = (categories | selectattr('_id','equalto', l.categorie_id) | list) %}
-                    {{ (cat[0].afkorting if cat else "—") }}
-                  </td>
-                  <td>{{ l.beschrijving }}</td>
-                  <td class="text-end">
-                    <form method="post" action="{{ url_for('web.delete_log', lid=l._id) }}" onsubmit="return confirm('Log verwijderen?')">
-                      <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
-                    </form>
-                  </td>
-                </tr>
-              {% else %}
-                <tr><td colspan="4" class="text-center text-secondary">Geen logitems</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-
+      <div class="card-header">Resultaten</div>
+      <div class="card-body p-0">
+        <table class="table table-dark table-striped table-hover mb-0 align-middle">
+          <thead>
+            <tr>
+              <th>OPO</th><th>AJ</th><th>Kans</th><th>Cijfer</th><th class="text-end">Acties</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for r in results %}
+            <tr>
+              <td>{{ r.opo_label }}</td>
+              <td>{{ r.academiejaar }}</td>
+              <td>{{ r.kans }}</td>
+              <td>{{ r.cijfer_display }}</td>
+              <td class="text-end">
+                <form method="post" action="{{ url_for('web.result_delete', res_id=r['_id']) }}"
+                      onsubmit="return confirm('Resultaat verwijderen?')" class="d-inline">
+                  <button class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+          {% else %}
+            <tr><td colspan="5" class="text-center text-secondary">Geen resultaten</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
+
+  <!-- LOGBOEK ------------------------------------------------------------- -->
+  <div class="tab-pane fade" id="pane-logboek" role="tabpanel"
+       aria-labelledby="tab-logboek">
+
+   <!-- Filters -->
+<form method="get"
+      action="{{ url_for('web.student_detail', id=s['_id']) }}"
+      class="row g-2 align-items-end mb-3">
+
+  <!-- keep Logboek active after submit -->
+  <input type="hidden" name="tab" value="logboek">
+
+  <div class="col-md-4 col-lg-3">
+    <label class="form-label">Categorie (filter)</label>
+    <select name="cat" class="form-select">
+      <option value="">Alle categorieën</option>
+      {% for c in categories %}
+        <option value="{{ c['_id'] }}" {% if f_cat == c['_id'] %}selected{% endif %}>
+          {{ c.label or (c.afkorting ~ ' — ' ~ c.omschrijving) }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="col-md-4 col-lg-3">
+    <label class="form-label">OPO (filter)</label>
+    <select name="opo" class="form-select">
+      <option value="">Alle OPO’s</option>
+      {% for o in opos %}
+        <option value="{{ o['_id'] }}" {% if f_opo == o['_id'] %}selected{% endif %}>
+          {{ o.label or (o.afkorting ~ ' — ' ~ o.naam) }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="col-md-4 col-lg-3 d-flex gap-2">
+    <button class="btn btn-outline-light flex-fill" type="submit">Filter</button>
+    <!-- reset but stay on Logboek -->
+    <a class="btn btn-outline-secondary"
+       href="{{ url_for('web.student_detail', id=s['_id'], tab='logboek') }}">
+      Wissen
+    </a>
+  </div>
+</form>
+
+
+    <!-- Nieuwe logregel (collapsible) -->
+    <div class="card text-bg-dark border-secondary mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Nieuwe logregel</span>
+        <button class="btn btn-sm btn-outline-light" type="button" data-bs-toggle="collapse" data-bs-target="#logForm">
+          Toon / verberg
+        </button>
+      </div>
+      <div id="logForm" class="collapse show">
+        <div class="card-body">
+          <form method="post" action="{{ url_for('web.student_add_log', id=s['_id']) }}" class="row g-2">
+            <div class="col-md-4">
+              <label class="form-label">Categorie</label>
+              <div class="input-group">
+                <select name="categorie_id" class="form-select">
+                  <option value="">—</option>
+                  {% for c in categories %}
+                    <option value="{{ c['_id'] }}">{{ c.label or (c.afkorting ~ ' — ' ~ c.omschrijving) }}</option>
+                  {% endfor %}
+                </select>
+                <a class="btn btn-outline-secondary"
+                   href="{{ url_for('web.cats_page', next=url_for('web.student_detail', id=s['_id'])) }}">
+                  Beheer
+                </a>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">OPO (optioneel)</label>
+              <select name="opo_id" class="form-select">
+                <option value="">—</option>
+                {% for o in opos %}
+                  <option value="{{ o['_id'] }}">{{ o.label or (o.afkorting ~ ' — ' ~ o.naam) }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Beschrijving</label>
+              <textarea name="beschrijving" rows="3" class="form-control" placeholder="Notitie..."></textarea>
+            </div>
+            <div class="col-12">
+              <button class="btn btn-primary">Opslaan</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loglijst -->
+    <div class="card text-bg-dark border-secondary">
+      <div class="card-header">Logregels</div>
+      <div class="list-group list-group-flush">
+        {% for lg in logs %}
+          <div class="list-group-item bg-dark text-light d-flex justify-content-between align-items-start">
+            <div class="me-3">
+              <div class="fw-semibold">
+                {{ lg.registratiedatum_str }}
+                {% if lg.cat_label %} • {{ lg.cat_label }}{% endif %}
+                {% if lg.opo_label %} • {{ lg.opo_label }}{% endif %}
+              </div>
+              <div class="text-secondary white-space-pre-wrap">{{ lg.beschrijving }}</div>
+            </div>
+            <form method="post" action="{{ url_for('web.log_delete', log_id=lg['_id']) }}"
+                  onsubmit="return confirm('Logregel verwijderen?')" class="ms-3">
+              <button class="btn btn-sm btn-outline-danger">
+                <i class="bi bi-trash"></i>
+              </button>
+            </form>
+          </div>
+        {% else %}
+          <div class="list-group-item bg-dark text-secondary text-center">
+            Geen logregels
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(location.search);
+    const tabParam = (params.get('tab') || 'gegevens').toLowerCase();
+    const targetId = 'pane-' + tabParam;
+
+    // Activeer juiste tab op load (buttons with data-bs-target)
+    const trigger = document.querySelector(
+      `[data-bs-toggle="tab"][data-bs-target="#${targetId}"]`
+    );
+    if (trigger) {
+      new bootstrap.Tab(trigger).show();
+    }
+
+    // Wanneer je van tab wisselt, schrijf 'tab' terug naar de URL
+    document.querySelectorAll('[data-bs-toggle="tab"]').forEach(el => {
+      el.addEventListener('shown.bs.tab', (e) => {
+        const target = e.target.getAttribute('data-bs-target') || '#pane-gegevens';
+        const tabName = target.replace('#pane-', ''); // 'logboek' | 'resultaten' | 'gegevens'
+        const p = new URLSearchParams(location.search);
+        p.set('tab', tabName);
+        history.replaceState(null, '', `${location.pathname}?${p.toString()}`);
+      });
+    });
+  });
+</script>
+
 {% endblock %}

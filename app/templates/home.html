@@ -1,36 +1,141 @@
 {% extends "base.html" %}
 {% block title %}Dashboard{% endblock %}
 {% block content %}
-<h2 class="mb-3">Dashboard</h2>
 
-<div class="row g-3">
-  <div class="col-sm-4">
-    <div class="card text-bg-dark border-secondary h-100">
-      <div class="card-body">
-        <div class="text-secondary text-uppercase small">Students</div>
-        <div class="display-6">{{ counts.students | default(0) }}</div>
+<style>
+  /* Tile look & feel */
+  .app-tile {
+    background: #fff;
+    color: #1f2937; /* dark text */
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 1.1rem 1.1rem;
+    height: 140px;
+    transition: transform .08s ease, box-shadow .08s ease, border-color .08s ease;
+    position: relative;
+  }
+  .app-tile:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0,0,0,.12);
+    border-color: #d1d5db;
+    text-decoration: none;
+  }
+  .app-icon {
+    font-size: 1.75rem;
+    color: #6b7280; /* muted */
+  }
+  .app-title {
+    font-weight: 700;
+    font-size: 1.15rem;
+    margin: .25rem 0 0 0;
+  }
+  .app-sub {
+    color: #6b7280;
+    font-size: .95rem;
+    margin: 0;
+  }
+</style>
+
+<div class="container">
+  <h2 class="mb-3">My Apps</h2>
+
+  <div class="row g-3">
+    <!-- Students -->
+    <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+      <a href="{{ url_for('web.students_page') }}" class="app-tile d-block">
+        <div class="app-icon"><i class="bi bi-people"></i></div>
+        <div class="app-title">Students</div>
+        <p class="app-sub">Beheer studenten</p>
+        <span class="stretched-link"></span>
+      </a>
+    </div>
+
+    <!-- Collectief rapport -->
+    <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+      <a href="{{ url_for('web.rapport_page') }}" class="app-tile d-block">
+        <div class="app-icon"><i class="bi bi-table"></i></div>
+        <div class="app-title">Collectief rapport</div>
+        <p class="app-sub">Resultaten per OPO/AJ</p>
+        <span class="stretched-link"></span>
+      </a>
+    </div>
+
+    <!-- Opleidingen -->
+    <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+      <a href="{{ url_for('web.opleidingen_page') }}" class="app-tile d-block">
+        <div class="app-icon"><i class="bi bi-building"></i></div>
+        <div class="app-title">Opleidingen</div>
+        <p class="app-sub">Dag / avond</p>
+        <span class="stretched-link"></span>
+      </a>
+    </div>
+
+    <!-- OPO’s -->
+    <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+      <a href="{{ url_for('web.opos_page') }}" class="app-tile d-block">
+        <div class="app-icon"><i class="bi bi-journal-bookmark"></i></div>
+        <div class="app-title">OPO’s</div>
+        <p class="app-sub">Vakkenoverzicht</p>
+        <span class="stretched-link"></span>
+      </a>
+    </div>
+      <!-- Academiejaren -->
+      <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+        <a href="{{ url_for('web.ajs_page') }}" class="app-tile d-block">
+          <div class="app-icon"><i class="bi bi-calendar3"></i></div>
+          <div class="app-title">Academiejaren</div>
+          <p class="app-sub">Beheer jaren</p>
+          <span class="stretched-link"></span>
+        </a>
+      </div>
+
+      <!-- Categorieën -->
+      <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+        <a href="{{ url_for('web.cats_page') }}" class="app-tile d-block">
+          <div class="app-icon"><i class="bi bi-tags"></i></div>
+          <div class="app-title">Categorieën</div>
+          <p class="app-sub">Logboek labels</p>
+          <span class="stretched-link"></span>
+        </a>
+      </div>
+  </div>
+
+  <!-- Kleine statistiek rij onder de tiles -->
+  <div class="row g-3 mt-4">
+    <div class="col-12 col-sm-6 col-lg-4">
+      <div class="card text-bg-dark border-secondary h-100">
+        <div class="card-body d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-secondary text-uppercase small">Students</div>
+            <div class="h3 m-0">{{ counts.students | default(0) }}</div>
+          </div>
+          <i class="bi bi-person-badge fs-3 text-secondary"></i>
+        </div>
       </div>
     </div>
-  </div>
-  <div class="col-sm-4">
-    <div class="card text-bg-dark border-secondary h-100">
-      <div class="card-body">
-        <div class="text-secondary text-uppercase small">OPO’s</div>
-        <div class="display-6">{{ counts.opos | default(0) }}</div>
+    <div class="col-12 col-sm-6 col-lg-4">
+      <div class="card text-bg-dark border-secondary h-100">
+        <div class="card-body d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-secondary text-uppercase small">OPO’s</div>
+            <div class="h3 m-0">{{ counts.opos | default(0) }}</div>
+          </div>
+          <i class="bi bi-journals fs-3 text-secondary"></i>
+        </div>
       </div>
     </div>
-  </div>
-  <div class="col-sm-4">
-    <div class="card text-bg-dark border-secondary h-100">
-      <div class="card-body">
-        <div class="text-secondary text-uppercase small">Resultaten</div>
-        <div class="display-6">{{ counts.resultaten | default(0) }}</div>
+    <div class="col-12 col-sm-6 col-lg-4">
+      <div class="card text-bg-dark border-secondary h-100">
+        <div class="card-body d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-secondary text-uppercase small">Resultaten</div>
+            <div class="h3 m-0">{{ counts.resultaten | default(0) }}</div>
+          </div>
+          <i class="bi bi-clipboard-data fs-3 text-secondary"></i>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<p class="mt-4">
-  Start bij <a class="link-light" href="{{ url_for('web.students_page') }}">Students</a>.
-</p>
 {% endblock %}

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Categorieën{% endblock %}
+{% block content %}
+<h2 class="mb-3">Categorieën</h2>
+
+{% if next_url %}
+  <div class="mb-3">
+    <a class="btn btn-outline-light" href="{{ next_url }}">← Terug naar student</a>
+  </div>
+{% endif %}
+
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card text-bg-dark border-secondary">
+      <div class="card-header">Nieuwe categorie</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('web.cats_create') }}" class="row g-2">
+          {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
+          <div class="col-4">
+            <label class="form-label">Afkorting</label>
+            <input name="afkorting" class="form-control" maxlength="10" required placeholder="BESL">
+          </div>
+          <div class="col-8">
+            <label class="form-label">Omschrijving</label>
+            <input name="omschrijving" class="form-control" required placeholder="Beslissing, Remediering, …">
+          </div>
+          <div class="col-12">
+            <button class="btn btn-primary">Opslaan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card text-bg-dark border-secondary">
+      <div class="card-header">Lijst</div>
+      <div class="card-body p-0">
+        <table class="table table-dark table-striped table-hover mb-0">
+          <thead><tr><th>Afkorting</th><th>Omschrijving</th><th class="text-end">Acties</th></tr></thead>
+          <tbody>
+          {% for c in categorien %}
+            <tr>
+              <td class="text-uppercase">{{ c.afkorting }}</td>
+              <td>{{ c.omschrijving }}</td>
+              <td class="text-end">
+                <form method="post" action="{{ url_for('web.cats_delete', id=c['_id']) }}">
+                  {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
+                  <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Verwijderen?')">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+          {% else %}
+            <tr><td colspan="3" class="text-center text-secondary">Nog geen categorieën</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if next_url %}
+  <div class="mt-3">
+    <a class="btn btn-outline-light" href="{{ next_url }}">Klaar — terug naar student</a>
+  </div>
+{% endif %}
+{% endblock %}

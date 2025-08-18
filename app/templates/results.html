@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}Resultaten{% endblock %}
+{% block content %}
+<h2 class="mb-3">Resultaten</h2>
+
+<!-- Filters -->
+<form method="get" action="{{ url_for('web.results_page') }}" class="row g-2 mb-3">
+  <div class="col-md-5">
+    <label class="form-label">OPO</label>
+    <select name="opo_id" class="form-select" required>
+      <option value="">— kies OPO —</option>
+      {% for o in opos %}
+        <option value="{{ o._id }}" {% if o._id|string == opo_id|string %}selected{% endif %}>
+          {{ o.afkorting }} {{ o.naam }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Academiejaar</label>
+    <select name="aj" class="form-select" required>
+      <option value="">— kies AJ —</option>
+      {% for y in jaren %}
+        <option value="{{ y.academiejaar }}" {% if y.academiejaar == aj %}selected{% endif %}>
+          {{ y.academiejaar }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-3 d-flex align-items-end">
+    <button class="btn btn-primary w-100">Bekijk</button>
+  </div>
+</form>
+
+<!-- Quick Add -->
+{% if opo_id and aj %}
+<div class="card text-bg-dark border-secondary mb-3">
+  <div class="card-header">Snel resultaat toevoegen</div>
+  <div class="card-body">
+    <form method="post" action="{{ url_for('web.results_add_quick') }}" class="row g-2">
+      <input type="hidden" name="opo_id" value="{{ opo_id }}">
+      <input type="hidden" name="academiejaar" value="{{ aj }}">
+      <div class="col-md-4">
+        <label class="form-label">Studentnummer</label>
+        <input name="studentnummer" class="form-control" required>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Kans</label>
+        <select name="kans" class="form-select">
+          <option value="1">1</option>
+          <option value="2">2</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Cijfer</label>
+        <input name="cijfer" type="number" min="0" max="20" step="0.1" class="form-control" placeholder="leeg = NA">
+      </div>
+      <div class="col-md-2 d-flex align-items-end">
+        <button class="btn btn-primary w-100">Toevoegen</button>
+      </div>
+      <div class="col-md-2 d-flex align-items-end">
+        <span class="text-secondary small">OPO: {{ opo_map.get(opo_id, opo_id) }} – AJ: {{ aj }}</span>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<!-- Stats + Table -->
+{% if results %}
+<div class="row g-3 mb-2">
+  <div class="col-sm-4">
+    <div class="card text-bg-dark border-secondary">
+      <div class="card-body">
+        <div class="text-secondary text-uppercase small">Geslaagd (≥10)</div>
+        <div class="display-6">{{ stats.geslaagd }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="card text-bg-dark border-secondary">
+      <div class="card-body">
+        <div class="text-secondary text-uppercase small">Niet geslaagd (&lt;10)</div>
+        <div class="display-6">{{ stats.niet }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="card text-bg-dark border-secondary">
+      <div class="card-body">
+        <div class="text-secondary text-uppercase small">NA</div>
+        <div class="display-6">{{ stats.na }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card text-bg-dark border-secondary">
+  <div class="card-header">Lijst resultaten</div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-dark table-striped table-hover mb-0 align-middle">
+        <thead>
+          <tr>
+            <th>Studentnr</th><th>Naam</th><th>Kans</th><th>Cijfer</th><th class="text-end">Acties</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for r in results %}
+          {% set s = students_map.get(r.student_id, {}) %}
+          <tr>
+            <td>{{ s.studentnummer or "?" }}</td>
+            <td>{{ s.naam or r.student_id }}</td>
+            <td>{{ r.kans }}</td>
+            <td>{{ "NA" if r.cijfer is none else r.cijfer }}</td>
+            <td class="text-end">
+              <form method="post" action="{{ url_for('web.delete_result', rid=r._id) }}" onsubmit="return confirm('Resultaat verwijderen?')">
+                <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+              </form>
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="5" class="text-center text-secondary">Geen resultaten</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% elif opo_id and aj %}
+<div class="alert alert-secondary">Geen resultaten voor deze combinatie.</div>
+{% endif %}
+{% endblock %}
